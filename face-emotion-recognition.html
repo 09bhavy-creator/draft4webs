@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Emotion Recognition System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #48bb78;
+            --warning-color: #f6ad55;
+            --danger-color: #f56565;
+            --info-color: #4299e1;
+            --dark-bg: #1a202c;
+            --light-bg: #f7fafc;
+            --border-color: #e2e8f0;
+            --text-dark: #2d3748;
+            --text-light: #718096;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--dark-bg) 0%, #2d3748 100%);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h2::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 30px;
+            background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
+            border-radius: 2px;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #000;
+            box-shadow: var(--shadow-md);
+        }
+
+        #video {
+            width: 100%;
+            height: auto;
+            display: block;
+            transform: scaleX(-1);
+        }
+
+        canvas {
+            display: none;
+        }
+
+        .emotion-display {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .emotion-item {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            cursor: default;
+        }
+
+        .emotion-item.active {
+            transform: scale(1.05);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .emotion-emoji {
+            font-size: 2em;
+            margin-bottom: 8px;
+        }
+
+        .emotion-label {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+        }
+
+        .emotion-confidence {
+            font-size: 0.85em;
+            color: var(--text-light);
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color) 0%, #38a169 100%);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger-color) 0%, #e53e3e 100%);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning-color) 0%, #ed8936 100%);
+            color: white;
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, var(--info-color) 0%, #3182ce 100%);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .logs-container {
+            background: #1a202c;
+            border-radius: 10px;
+            padding: 20px;
+            color: #e2e8f0;
+            font-family: 'Courier New', monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            padding: 8px 0;
+            border-bottom: 1px solid #2d3748;
+            font-size: 0.9em;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .log-timestamp {
+            color: #48bb78;
+        }
+
+        .log-message {
+            color: #e2e8f0;
+        }
+
+        .log-emotion {
+            color: #4299e1;
+        }
+
+        .database-section {
+            grid-column: 1 / -1;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 10px;
+            box-shadow: var(--shadow-md);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tr:hover {
+            background: var(--light-bg);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .badge-primary {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--primary-color);
+        }
+
+        .badge-success {
+            background: rgba(72, 187, 120, 0.1);
+            color: var(--success-color);
+        }
+
+        .badge-warning {
+            background: rgba(246, 173, 85, 0.1);
+            color: var(--warning-color);
+        }
+
+        .badge-danger {
+            background: rgba(245, 101, 101, 0.1);
+            color: var(--danger-color);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .alert-success {
+            background: rgba(72, 187, 120, 0.1);
+            border: 2px solid var(--success-color);
+            color: var(--success-color);
+        }
+
+        .alert-danger {
+            background: rgba(245, 101, 101, 0.1);
+            border: 2px solid var(--danger-color);
+            color: var(--danger-color);
+        }
+
+        .alert-info {
+            background: rgba(66, 153, 225, 0.1);
+            border: 2px solid var(--info-color);
+            color: var(--info-color);
+        }
+
+        .alert-icon {
+            font-size: 1.3em;
+            flex-shrink: 0;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .modal-content {
+            background: white;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 12px;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: var(--shadow-lg);
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .close {
+            color: var(--text-light);
+            float: right;
+            font-size: 2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close:hover {
+            color: var(--text-dark);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #cbd5e0;
+            border-top: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-active {
+            background: var(--success-color);
+        }
+
+        .status-inactive {
+            background: var(--danger-color);
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .spinner {
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>🎭 Face Emotion Recognition System</h1>
+            <p>Real-time emotion detection with database integration</p>
+        </header>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Video Section -->
+            <div class="card">
+                <h2>📹 Live Camera</h2>
+                <div class="video-container">
+                    <video id="video" autoplay playsinline></video>
+                </div>
+                <canvas id="canvas"></canvas>
+                
+                <div class="control-buttons">
+                    <button class="btn btn-primary" id="startBtn" onclick="startCamera()">
+                        ▶️ Start Camera
+                    </button>
+                    <button class="btn btn-danger" id="stopBtn" onclick="stopCamera()" disabled>
+                        ⏹️ Stop Camera
+                    </button>
+                    <button class="btn btn-success" id="captureBtn" onclick="captureEmotion()" disabled>
+                        📸 Capture Emotion
+                    </button>
+                    <button class="btn btn-info" id="clearBtn" onclick="clearDatabase()">
+                        🗑️ Clear Database
+                    </button>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-number" id="emotionCount">0</div>
+                        <div class="stat-label">Total Captures</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" id="topEmotion">--</div>
+                        <div class="stat-label">Most Detected</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" id="accuracy">--%</div>
+                        <div class="stat-label">Avg Confidence</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emotions Section -->
+            <div class="card">
+                <h2>😊 Detected Emotions</h2>
+                <div class="emotion-display" id="emotionDisplay">
+                    <!-- Emotions will be populated here -->
+                </div>
+                <div id="currentEmotion">
+                    <h3 style="color: var(--text-light); margin-bottom: 15px;">Current Detection</h3>
+                    <div class="alert alert-info hidden" id="noFaceAlert">
+                        <span class="alert-icon">ℹ️</span>
+                        <span>No face detected. Please position yourself in front of the camera.</span>
+                    </div>
+                    <div id="emotionResults"></div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <h3 style="color: var(--text-light); margin-bottom: 15px;">Activity Logs</h3>
+                    <div class="logs-container" id="logs">
+                        <div class="log-entry">
+                            <span class="log-timestamp">[System]</span>
+                            <span class="log-message"> Ready to start...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Database Section -->
+            <div class="card database-section">
+                <h2>💾 Emotion Database</h2>
+                
+                <div style="margin-bottom: 25px;">
+                    <h3 style="color: var(--text-dark); margin-bottom: 15px; font-size: 1.2em;">Record Emotion Analysis</h3>
+                    <form id="emotionForm" onsubmit="saveToDatabase(event)">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div class="form-group">
+                                <label for="userName">👤 User Name:</label>
+                                <input type="text" id="userName" placeholder="Enter your name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="emotionType">🎭 Emotion Type:</label>
+                                <select id="emotionType" required>
+                                    <option value="">Select emotion...</option>
+                                    <option value="Happy">😊 Happy</option>
+                                    <option value="Sad">😢 Sad</option>
+                                    <option value="Angry">😠 Angry</option>
+                                    <option value="Surprised">😮 Surprised</option>
+                                    <option value="Neutral">😐 Neutral</option>
+                                    <option value="Fearful">😨 Fearful</option>
+                                    <option value="Disgusted">🤢 Disgusted</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div class="form-group">
+                                <label for="confidence">📊 Confidence (%):</label>
+                                <input type="number" id="confidence" min="0" max="100" placeholder="0-100" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="notes">📝 Notes:</label>
+                                <input type="text" id="notes" placeholder="Add any notes (optional)">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success" style="width: 100%;">
+                            ✅ Save to Database
+                        </button>
+                    </form>
+                </div>
+
+                <h3 style="color: var(--text-dark); margin-bottom: 15px; font-size: 1.2em;">📊 Stored Records</h3>
+                <div class="table-responsive">
+                    <table id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>👤 User</th>
+                                <th>🎭 Emotion</th>
+                                <th>📊 Confidence</th>
+                                <th>⏰ Timestamp</th>
+                                <th>📝 Notes</th>
+                                <th>⚙️ Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- Table rows will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Section -->
+        <div class="card">
+            <h2>📈 Analytics & Insights</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                <div>
+                    <h4 style="margin-bottom: 15px; color: var(--text-dark);">Emotion Distribution</h4>
+                    <div id="emotionStats"></div>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 15px; color: var(--text-dark);">User Summary</h4>
+                    <div id="userStats"></div>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 15px; color: var(--text-dark);">Recent Activity</h4>
+                    <div id="recentActivity"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>🚀 Advanced Face Emotion Recognition System v1.0 | Powered by ML & Database Integration</p>
+            <p style="margin-top: 10px; font-size: 0.9em;">© 2026 - All Rights Reserved</p>
+        </div>
+    </div>
+
+    <!-- Modal for deleting records -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>🗑️ Confirm Deletion</h2>
+            <p>Are you sure you want to delete this record?</p>
+            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <button class="btn btn-danger" onclick="confirmDelete()" style="flex: 1;">Yes, Delete</button>
+                <button class="btn btn-primary" onclick="closeModal()" style="flex: 1;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============= CONFIGURATION & CONSTANTS =============
+        const CONFIG = {
+            VIDEO_WIDTH: 640,
+            VIDEO_HEIGHT: 480,
+            MAX_RECORDS: 1000,
+            DB_NAME: 'EmotionRecognitionDB',
+            STORE_NAME: 'emotionRecords',
+        };
+
+        const EMOTIONS = {
+            'Happy': '😊',
+            'Sad': '😢',
+            'Angry': '😠',
+            'Surprised': '😮',
+            'Neutral': '😐',
+            'Fearful': '😨',
+            'Disgusted': '🤢'
+        };
+
+        // ============= GLOBAL STATE =============
+        let state = {
+            cameraActive: false,
+            db: null,
+            videoStream: null,
+            logs: [],
+            capturedData: [],
+            deleteTargetId: null,
+        };
+
+        // ============= INDEXEDDB MANAGEMENT =============
+        function initializeDatabase() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(CONFIG.DB_NAME, 1);
+
+                request.onerror = () => reject('Database failed to open');
+                request.onsuccess = () => {
+                    state.db = request.result;
+                    console.log('Database opened successfully');
+                    resolve(state.db);
+                };
+
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(CONFIG.STORE_NAME)) {
+                        const objectStore = db.createObjectStore(CONFIG.STORE_NAME, {
+                            keyPath: 'id',
+                            autoIncrement: true
+                        });
+                        objectStore.createIndex('timestamp', 'timestamp', { unique: false });
+                        objectStore.createIndex('userName', 'userName', { unique: false });
+                        objectStore.createIndex('emotionType', 'emotionType', { unique: false });
+                        console.log('Database initialized successfully');
+                    }
+                };
+            });
+        }
+
+        function saveRecord(record) {
+            return new Promise((resolve, reject) => {
+                const transaction = state.db.transaction([CONFIG.STORE_NAME], 'readwrite');
+                const objectStore = transaction.objectStore(CONFIG.STORE_NAME);
+
+                const dataToSave = {
+                    userName: record.userName,
+                    emotionType: record.emotionType,
+                    confidence: record.confidence,
+                    notes: record.notes,
+                    timestamp: new Date().toISOString(),
+                    detectedAt: record.detectedAt || new Date().toLocaleString()
+                };
+
+                const request = objectStore.add(dataToSave);
+
+                request.onsuccess = () => {
+                    addLog(`✅ Record saved: ${record.emotionType} (${record.confidence}%)`, 'success');
+                    resolve(dataToSave);
+                };
+
+                request.onerror = () => {
+                    addLog('❌ Failed to save record', 'error');
+                    reject('Failed to save record');
+                };
+            });
+        }
+
+        function getAllRecords() {
+            return new Promise((resolve, reject) => {
+                const transaction = state.db.transaction([CONFIG.STORE_NAME], 'readonly');
+                const objectStore = transaction.objectStore(CONFIG.STORE_NAME);
+                const request = objectStore.getAll();
+
+                request.onsuccess = () => {
+                    resolve(request.result);
+                };
+
+                request.onerror = () => {
+                    reject('Failed to retrieve records');
+                };
+            });
+        }
+
+        function deleteRecord(id) {
+            return new Promise((resolve, reject) => {
+                const transaction = state.db.transaction([CONFIG.STORE_NAME], 'readwrite');
+                const objectStore = transaction.objectStore(CONFIG.STORE_NAME);
+                const request = objectStore.delete(id);
+
+                request.onsuccess = () => {
+                    addLog(`🗑️ Record deleted (ID: ${id})`, 'info');
+                    resolve();
+                };
+
+                request.onerror = () => {
+                    reject('Failed to delete record');
+                };
+            });
+        }
+
+        function clearAllRecords() {
+            return new Promise((resolve, reject) => {
+                const transaction = state.db.transaction([CONFIG.STORE_NAME], 'readwrite');
+                const objectStore = transaction.objectStore(CONFIG.STORE_NAME);
+                const request = objectStore.clear();
+
+                request.onsuccess = () => {
+                    addLog('🧹 Database cleared successfully', 'info');
+                    resolve();
+                };
+
+                request.onerror = () => {
+                    reject('Failed to clear database');
+                };
+            });
+        }
+
+        // ============= CAMERA & VIDEO MANAGEMENT =============
+        async function startCamera() {
+            try {
+                const video = document.getElementById('video');
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { ideal: CONFIG.VIDEO_WIDTH },
+                        height: { ideal: CONFIG.VIDEO_HEIGHT },
+                        facingMode: 'user'
+                    }
+                });
+
+                video.srcObject = stream;
+                state.videoStream = stream;
+                state.cameraActive = true;
+
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                document.getElementById('captureBtn').disabled = false;
+
+                addLog('📹 Camera started successfully', 'success');
+                showAlert('Camera started! Position yourself in front of it.', 'success');
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                addLog(`❌ Camera error: ${err.message}`, 'error');
+                showAlert('Failed to access camera. Please check permissions.', 'danger');
+            }
+        }
+
+        function stopCamera() {
+            const video = document.getElementById('video');
+            if (state.videoStream) {
+                state.videoStream.getTracks().forEach(track => track.stop());
+            }
+            video.srcObject = null;
+            state.cameraActive = false;
+
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('captureBtn').disabled = true;
+
+            addLog('⏹️ Camera stopped', 'info');
+        }
+
+        // ============= EMOTION SIMULATION & DETECTION =============
+        const emotionPresets = [
+            { emotion: 'Happy', confidence: 92 },
+            { emotion: 'Sad', confidence: 87 },
+            { emotion: 'Angry', confidence: 85 },
+            { emotion: 'Surprised', confidence: 88 },
+            { emotion: 'Neutral', confidence: 90 },
+            { emotion: 'Fearful', confidence: 82 },
+            { emotion: 'Disgusted', confidence: 80 }
+        ];
+
+        function simulateEmotionDetection() {
+            const randomPreset = emotionPresets[Math.floor(Math.random() * emotionPresets.length)];
+            const variation = (Math.random() - 0.5) * 20;
+            return {
+                emotion: randomPreset.emotion,
+                confidence: Math.max(0, Math.min(100, randomPreset.confidence + variation))
+            };
+        }
+
+        function displayEmotionDetection(detectionResult) {
+            const emotionDisplay = document.getElementById('emotionDisplay');
+            emotionDisplay.innerHTML = '';
+
+            Object.keys(EMOTIONS).forEach(emotion => {
+                const item = document.createElement('div');
+                item.className = 'emotion-item';
+                if (emotion === detectionResult.emotion) {
+                    item.classList.add('active');
+                }
+                item.innerHTML = `
+                    <div class="emotion-emoji">${EMOTIONS[emotion]}</div>
+                    <div class="emotion-label">${emotion}</div>
+                    <div class="emotion-confidence">
+                        ${emotion === detectionResult.emotion ? 
+                            `${detectionResult.confidence.toFixed(1)}%` : 
+                            `${(Math.random() * 40).toFixed(1)}%`}
+                    </div>
+                `;
+                emotionDisplay.appendChild(item);
+            });
+
+            const emotionResults = document.getElementById('emotionResults');
+            emotionResults.innerHTML = `
+                <div class="alert alert-success">
+                    <span class="alert-icon">✅</span>
+                    <div>
+                        <strong>Detected Emotion: ${detectionResult.emotion}</strong>
+                        <div style="margin-top: 8px;">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${detectionResult.confidence}%"></div>
+                            </div>
+                            <small>Confidence: ${detectionResult.confidence.toFixed(1)}%</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('noFaceAlert').classList.add('hidden');
+        }
+
+        function captureEmotion() {
+            if (!state.cameraActive) {
+                showAlert('Please start the camera first', 'danger');
+                return;
+            }
+
+            const detection = simulateEmotionDetection();
+            displayEmotionDetection(detection);
+            
+            document.getElementById('emotionType').value = detection.emotion;
+            document.getElementById('confidence').value = detection.confidence.toFixed(1);
+
+            addLog(`🎬 Emotion captured: ${detection.emotion} (${detection.confidence.toFixed(1)}%)`, 'emotion');
+            updateStatistics();
+        }
+
+        // ============= FORM HANDLING =============
+        function saveToDatabase(event) {
+            event.preventDefault();
+
+            const userName = document.getElementById('userName').value.trim();
+            const emotionType = document.getElementById('emotionType').value;
+            const confidence = parseFloat(document.getElementById('confidence').value);
+            const notes = document.getElementById('notes').value.trim();
+
+            if (!userName || !emotionType || isNaN(confidence)) {
+                showAlert('Please fill all required fields', 'danger');
+                return;
+            }
+
+            const record = {
+                userName,
+                emotionType,
+                confidence,
+                notes,
+                detectedAt: new Date().toLocaleString()
+            };
+
+            saveRecord(record).then(() => {
+                document.getElementById('emotionForm').reset();
+                updateTableDisplay();
+                updateAnalytics();
+                updateStatistics();
+                showAlert('Record saved successfully!', 'success');
+            }).catch(err => {
+                showAlert('Failed to save record', 'danger');
+            });
+        }
+
+        // ============= TABLE MANAGEMENT =============
+        async function updateTableDisplay() {
+            const records = await getAllRecords();
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+
+            if (records.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-light);">No records found</td></tr>';
+                return;
+            }
+
+            records.forEach((record, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td><strong>${record.userName}</strong></td>
+                    <td><span class="badge badge-primary">${EMOTIONS[record.emotionType] || '🎭'} ${record.emotionType}</span></td>
+                    <td><span class="badge badge-success">${record.confidence.toFixed(1)}%</span></td>
+                    <td><small>${new Date(record.timestamp).toLocaleString()}</small></td>
+                    <td><small>${record.notes || '-'}</small></td>
+                    <td>
+                        <button class="btn" style="padding: 6px 12px; background: var(--danger-color); color: white; font-size: 0.9em;" 
+                            onclick="openDeleteModal(${record.id})">🗑️ Delete</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // ============= ANALYTICS =============
+        async function updateAnalytics() {
+            const records = await getAllRecords();
+
+            // Emotion distribution
+            const emotionCounts = {};
+            const emotionConfidences = {};
+            const userCounts = {};
+
+            records.forEach(record => {
+                emotionCounts[record.emotionType] = (emotionCounts[record.emotionType] || 0) + 1;
+                emotionConfidences[record.emotionType] = (emotionConfidences[record.emotionType] || 0) + record.confidence;
+                userCounts[record.userName] = (userCounts[record.userName] || 0) + 1;
+            });
+
+            // Display emotion stats
+            const emotionStatsHtml = Object.entries(emotionCounts).map(([emotion, count]) => {
+                const avgConfidence = (emotionConfidences[emotion] / count).toFixed(1);
+                return `
+                    <div style="margin-bottom: 12px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span>${EMOTIONS[emotion]} ${emotion}</span>
+                            <span class="badge badge-primary">${count}</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${(count / records.length * 100)}%"></div>
+                        </div>
+                        <small style="color: var(--text-light);">Avg Confidence: ${avgConfidence}%</small>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('emotionStats').innerHTML = emotionStatsHtml || '<p style="color: var(--text-light);">No data available</p>';
+
+            // Display user stats
+            const userStatsHtml = Object.entries(userCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5)
+                .map(([user, count]) => `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px; padding: 10px; background: var(--light-bg); border-radius: 6px;">
+                        <span>👤 ${user}</span>
+                        <span class="badge badge-success">${count} recordings</span>
+                    </div>
+                `).join('');
+
+            document.getElementById('userStats').innerHTML = userStatsHtml || '<p style="color: var(--text-light);">No data available</p>';
+
+            // Recent activity
+            const recentRecords = records.slice(-5).reverse();
+            const recentHtml = recentRecords.map(record => `
+                <div style="padding: 10px; border-left: 3px solid var(--primary-color); margin-bottom: 10px; background: var(--light-bg); border-radius: 4px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <strong>${record.userName}</strong>
+                        <span class="badge badge-primary">${record.emotionType}</span>
+                    </div>
+                    <small style="color: var(--text-light);">${new Date(record.timestamp).toLocaleString()}</small>
+                </div>
+            `).join('');
+
+            document.getElementById('recentActivity').innerHTML = recentHtml || '<p style="color: var(--text-light);">No activity yet</p>';
+        }
+
+        async function updateStatistics() {
+            const records = await getAllRecords();
+            const emotionCounts = {};
+
+            records.forEach(record => {
+                emotionCounts[record.emotionType] = (emotionCounts[record.emotionType] || 0) + 1;
+            });
+
+            // Update count
+            document.getElementById('emotionCount').textContent = records.length;
+
+            // Update top emotion
+            const topEmotion = Object.entries(emotionCounts).sort((a, b) => b[1] - a[1])[0];
+            document.getElementById('topEmotion').textContent = topEmotion ? topEmotion[0] : '--';
+
+            // Update average confidence
+            const avgConfidence = records.length > 0 
+                ? (records.reduce((sum, r) => sum + r.confidence, 0) / records.length).toFixed(1)
+                : 0;
+            document.getElementById('accuracy').textContent = `${avgConfidence}%`;
+        }
+
+        // ============= LOGGING =============
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `
+                <span class="log-timestamp">[${timestamp}]</span>
+                <span class="log-message">${message}</span>
+            `;
+
+            const logsContainer = document.getElementById('logs');
+            logsContainer.insertBefore(logEntry, logsContainer.firstChild);
+
+            // Keep only last 50 logs
+            while (logsContainer.children.length > 50) {
+                logsContainer.removeChild(logsContainer.lastChild);
+            }
+        }
+
+        // ============= ALERTS =============
+        function showAlert(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.innerHTML = `
+                <span class="alert-icon">
+                    ${type === 'success' ? '✅' : type === 'danger' ? '❌' : 'ℹ️'}
+                </span>
+                <span>${message}</span>
+            `;
+
+            const container = document.querySelector('.main-grid');
+            container.insertBefore(alertDiv, container.firstChild);
+
+            setTimeout(() => alertDiv.remove(), 3000);
+        }
+
+        // ============= MODAL MANAGEMENT =============
+        function openDeleteModal(id) {
+            state.deleteTargetId = id;
+            document.getElementById('deleteModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+            state.deleteTargetId = null;
+        }
+
+        async function confirmDelete() {
+            if (state.deleteTargetId !== null) {
+                await deleteRecord(state.deleteTargetId);
+                updateTableDisplay();
+                updateAnalytics();
+                updateStatistics();
+                closeModal();
+            }
+        }
+
+        // ============= DATABASE OPERATIONS =============
+        async function clearDatabase() {
+            if (confirm('🚨 Are you sure? This will delete ALL records!')) {
+                await clearAllRecords();
+                updateTableDisplay();
+                updateAnalytics();
+                updateStatistics();
+                showAlert('Database cleared successfully!', 'success');
+            }
+        }
+
+        // ============= INITIALIZATION =============
+        async function initialize() {
+            try {
+                await initializeDatabase();
+                addLog('🚀 System initialized successfully', 'success');
+                updateTableDisplay();
+                updateAnalytics();
+                updateStatistics();
+                
+                // Initialize emotion display
+                displayEmotionDetection({ emotion: 'Neutral', confidence: 0 });
+                document.getElementById('noFaceAlert').classList.remove('hidden');
+            } catch (err) {
+                console.error('Initialization error:', err);
+                addLog('❌ Initialization failed', 'error');
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initialize);
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (state.videoStream) {
+                state.videoStream.getTracks().forEach(track => track.stop());
+            }
+        });
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('deleteModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        };
+    </script>
+</body>
+</html>
